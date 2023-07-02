@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class HealthMeter : MonoBehaviour {
@@ -16,6 +17,8 @@ public class HealthMeter : MonoBehaviour {
     bool _displayed;
     float _displayTime = 1f;
     float _displayTimer = 0f;
+
+    public static UnityEvent onPlayerDeath = new UnityEvent();
 
     // Start is called before the first frame update
     void Start() {
@@ -34,16 +37,14 @@ public class HealthMeter : MonoBehaviour {
 
     public void TakeDamage() {
         _health -= 1;
-        _healthPoints[_health].enabled = false;
-
-        DisplayHealth();
 
         if (_health <= 0) {
             _health = 0;
-
-            // Die and restart
-
         }
+
+        _healthPoints[_health].enabled = false;
+
+        DisplayHealth();
     }
 
     public void GainHealth() {
@@ -54,8 +55,18 @@ public class HealthMeter : MonoBehaviour {
 
         _healthPoints[_health-1].enabled = true;
 
-
         DisplayHealth();
+    }
+
+    public void ResetHealth() {
+        if(_health < 3) {
+            DisplayHealth();
+        }
+
+        _health = 3;
+        for (int i = 0; i < _healthPoints.Length; i++) {
+            _healthPoints[i].enabled = true;
+        }
     }
 
     void DisplayHealth() {
@@ -68,5 +79,24 @@ public class HealthMeter : MonoBehaviour {
     void HideHealth() {
         _displayed = false;
         _meterObject.SetActive(false);
+    }
+
+    public bool DeathCheck() {
+        if (_health <= 0) {
+            _health = 0;
+
+            // Die and restart
+            Die();
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void Die() {
+        onPlayerDeath.Invoke();
+
+        ResetHealth();
     }
 }

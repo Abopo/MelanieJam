@@ -19,7 +19,7 @@ public class DizzyMeter : MonoBehaviour {
     [SerializeField]
     float _dizzyTimer;
 
-    float _bufferTime = 0.5f;
+    float _bufferTime = 1f;
     float _bufferTimer;
 
     public bool isDizzy;
@@ -39,9 +39,9 @@ public class DizzyMeter : MonoBehaviour {
             _bufferTimer += Time.deltaTime;
             if (_bufferTimer > _bufferTime) {
                 if (isDizzy) {
-                    DecreaseMeter(Time.deltaTime/2);
+                    DecreaseMeter(Time.deltaTime/2f);
                 } else {
-                    DecreaseMeter(Time.deltaTime);
+                    DecreaseMeter(Time.deltaTime/2f);
                 }
             }
         }
@@ -85,5 +85,10 @@ public class DizzyMeter : MonoBehaviour {
             // Undizzy
             isDizzy = false;
         }
+    }
+
+    public void ResetMeter() {
+        _dizzyTimer = 0f;
+        UpdateMeter();
     }
 }

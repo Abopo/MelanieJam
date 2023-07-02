@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
 
-    bool _hasControl;
+    public bool hasControl;
 
     [SerializeField]
     float _moveSpeed;
@@ -14,11 +14,17 @@ public class PlayerController : MonoBehaviour {
     Vector3 _lastMousePos;
     float mouseDist;
 
+    //[SerializeField]
+    //ParticleSystem _ecolocation;
+
+    Echolocation _ecolocation;
     [SerializeField]
-    ParticleSystem _ecolocation;
+    float _mouseBuffer = 0.2f;
+    float _bufferTimer = 0f;
 
     [SerializeField]
     float damagePushForce;
+    bool _damaged;
     float _damageTime = 0.2f;
     float _damageTimer = 0f;
 
@@ -28,12 +34,23 @@ public class PlayerController : MonoBehaviour {
     HealthMeter _healthMeter;
     DizzyMeter _dizzyMeter;
 
+    public HealthMeter HealthMeter { get => _healthMeter; }
+
+    private void Awake() {
+    }
     // Start is called before the first frame update
     void Start() {
         _rigidBody = GetComponent<Rigidbody>();
 
+        _ecolocation = GetComponentInChildren<Echolocation>();
         _healthMeter = GetComponentInChildren<HealthMeter>();
         _dizzyMeter = GetComponentInChildren<DizzyMeter>();
+
+        HealthMeter.onPlayerDeath.AddListener(OnPlayerDeath);
+
+        hasControl = true;
+        _bufferTimer = _mouseBuffer;
+        _lastMousePos = Input.mousePosition;
     }
 
     // Update is called once per frame
@@ -43,16 +60,20 @@ public class PlayerController : MonoBehaviour {
     private void FixedUpdate() {
         _velocity = Vector3.zero;
 
-        if (_hasControl) {
+        if (hasControl) {
             CheckInput();
 
             Movement();
-        } else {
+
+            _bufferTimer += Time.deltaTime;
+        } else if(_damaged) {
             _damageTimer += Time.deltaTime;
             if(_damageTimer > _damageTime) {
-                _hasControl = true;
+                EndDamageStun();
             }
         }
+
+        _lastMousePos = Input.mousePosition;
     }
 
     void CheckInput() {
@@ -72,17 +93,15 @@ public class PlayerController : MonoBehaviour {
         // Mouse
         if(!_dizzyMeter.isDizzy) {
             mouseDist = Vector3.Distance(Input.mousePosition, _lastMousePos);
-            if (mouseDist >= mouseSensitivity) {
-                if (!_ecolocation.isEmitting) {
-                    _ecolocation.Play();
-                }
+            if (mouseDist >= mouseSensitivity || Input.GetKey(KeyCode.Space)) {
+                _ecolocation.PlayEffect();
                 _dizzyMeter.IncreaseMeter();
-            } else if(_ecolocation.isPlaying){
-                _ecolocation.Stop();
+                _bufferTimer = 0f;
+            } else if(_bufferTimer >= _mouseBuffer) {
+                _ecolocation.StopEffect();
             }
-            _lastMousePos = Input.mousePosition;
-        } else if (_ecolocation.isPlaying) {
-            _ecolocation.Stop();
+        } else {
+            _ecolocation.StopEffect();
         }
     }
 
@@ -91,16 +110,18 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void OnCollisionEnter(Collision collision) {
-        if(_hasControl && collision.gameObject.layer == LayerMask.NameToLayer("CollisionObject")) {
-            if(collision.gameObject.GetComponent<CollisionObject>().objectType == OBJECT_TYPE.DANGER) {
-                // Take one damage
-                _healthMeter.TakeDamage();
+        if(hasControl) {
+            if (collision.gameObject.GetComponent<CollisionObject>() != null) {
+                if (collision.gameObject.GetComponent<CollisionObject>().objectType == OBJECT_TYPE.DANGER) {
+                    // Take one damage
+                    _healthMeter.TakeDamage();
 
-                // Get pushed away from the object
-                DamagePush(collision.transform);
+                    // Get pushed away from the object
+                    DamagePush(collision.transform);
 
-                // Briefly lose control
-                LoseControl();
+                    // Briefly lose control
+                    DamageStun();
+                }
             }
         }
     }
@@ -113,8 +134,27 @@ public class PlayerController : MonoBehaviour {
         _rigidBody.AddForce(dir * damagePushForce, ForceMode.VelocityChange);
     }
 
-    void LoseControl() {
-        _hasControl = false;
+    void DamageStun() {
+        hasControl = false;
+        _damaged = true;
         _damageTimer = 0;
+
+        _ecolocation.StopEffect();
+    }
+
+    void EndDamageStun() {
+        // First do a death check
+        if(!_healthMeter.DeathCheck()) {
+            // If we're not dead, get control back
+            hasControl = true;
+        } else {
+            // Wait for death stuff to happen
+        }
+    }
+
+    void OnPlayerDeath() {
+        _rigidBody.velocity = Vector3.zero;
+        
+        _dizzyMeter.ResetMeter();
     }
 }
