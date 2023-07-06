@@ -7,6 +7,9 @@ public class Door : OnOffObject {
     public float upYPos;
     public float downYPos;
 
+    [SerializeField]
+    Transform _movingPart;
+
     // Start is called before the first frame update
     void Start() {
         
@@ -21,13 +24,15 @@ public class Door : OnOffObject {
         base.TurnOn();
 
         // Move up to blocking position
-        transform.position = new Vector3(transform.position.x, upYPos, transform.position.z);
+        _movingPart.position = new Vector3(transform.position.x, upYPos, transform.position.z);
+
+        // TODO: Play audio source if have
     }
 
     public override void TurnOff() {
         base.TurnOff();
 
         // Move down below the floor
-        transform.position = new Vector3(transform.position.x, downYPos, transform.position.z);
+        _movingPart.position = new Vector3(transform.position.x, downYPos, transform.position.z);
     }
 }

@@ -28,11 +28,30 @@ public class PlayerController : MonoBehaviour {
     float _damageTime = 0.2f;
     float _damageTimer = 0f;
 
+    // Shop stuff
+    public int cash;
+    public int shinyRocks = 0;
+    public bool hasFloodlight;
+    [SerializeField]
+    GameObject _floodlight;
+    public bool hasSlingshot;
+    [SerializeField]
+    GameObject _slingObject;
+    [SerializeField]
+    float _slingCooldown;
+    float _slingCooldownTimer = 0f;
+
     Vector3 _velocity;
     Rigidbody _rigidBody;
+    Collider _myCollider;
 
+    PlayerAudio _audio;
+    Camera _camera;
+
+    // UI
     HealthMeter _healthMeter;
     DizzyMeter _dizzyMeter;
+    CashCounter _cashCounter;
 
     public HealthMeter HealthMeter { get => _healthMeter; }
 
@@ -43,9 +62,14 @@ public class PlayerController : MonoBehaviour {
         _rigidBody = GetComponent<Rigidbody>();
 
         _ecolocation = GetComponentInChildren<Echolocation>();
+        _audio = GetComponentInChildren<PlayerAudio>();
         _healthMeter = GetComponentInChildren<HealthMeter>();
         _dizzyMeter = GetComponentInChildren<DizzyMeter>();
+        _cashCounter = GetComponentInChildren<CashCounter>(true);
 
+        _myCollider = GetComponentInChildren<Collider>();
+
+        _camera = GetComponentInChildren<Camera>();
         HealthMeter.onPlayerDeath.AddListener(OnPlayerDeath);
 
         hasControl = true;
@@ -55,20 +79,43 @@ public class PlayerController : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
+        if(hasSlingshot) {
+            _slingCooldownTimer += Time.deltaTime;
+        }
+
+        if (hasControl) {
+            // Items
+            if (shinyRocks > 0) {
+                if (Input.GetKeyDown(KeyCode.R)) {
+                    DropShinyRock();
+                }
+            }
+            if (hasFloodlight) {
+                if (Input.GetKeyDown(KeyCode.F)) {
+                    ToggleFloodlight();
+                }
+            }
+            if (hasSlingshot) {
+                if (Input.GetMouseButtonDown(1)) {
+                    FireSlingshot();
+                }
+            }
+        }
+
+        _velocity = Vector3.zero;
+
     }
 
     private void FixedUpdate() {
-        _velocity = Vector3.zero;
-
         if (hasControl) {
             CheckInput();
 
             Movement();
 
             _bufferTimer += Time.deltaTime;
-        } else if(_damaged) {
+        } else if (_damaged) {
             _damageTimer += Time.deltaTime;
-            if(_damageTimer > _damageTime) {
+            if (_damageTimer > _damageTime) {
                 EndDamageStun();
             }
         }
@@ -113,17 +160,24 @@ public class PlayerController : MonoBehaviour {
         if(hasControl) {
             if (collision.gameObject.GetComponent<CollisionObject>() != null) {
                 if (collision.gameObject.GetComponent<CollisionObject>().objectType == OBJECT_TYPE.DANGER) {
-                    // Take one damage
-                    _healthMeter.TakeDamage();
-
                     // Get pushed away from the object
                     DamagePush(collision.transform);
 
-                    // Briefly lose control
-                    DamageStun();
+                    // Take a damage
+                    TakeDamage();
                 }
             }
         }
+    }
+
+    void TakeDamage() {
+        // Take one damage
+        _healthMeter.TakeDamage();
+
+        // Briefly lose control
+        DamageStun();
+
+        _audio.PlayHurtClip();
     }
 
     void DamagePush(Transform source) {
@@ -143,6 +197,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     void EndDamageStun() {
+        _damaged = false;
+        
         // First do a death check
         if(!_healthMeter.DeathCheck()) {
             // If we're not dead, get control back
@@ -156,5 +212,53 @@ public class PlayerController : MonoBehaviour {
         _rigidBody.velocity = Vector3.zero;
         
         _dizzyMeter.ResetMeter();
+    }
+
+    public void GetCash() {
+        cash++;
+
+        _cashCounter.DisplayCashCount();
+
+        // Play a sound
+
+    }
+
+    void DropShinyRock() {
+        if(shinyRocks > 0) {
+            Vector3 spawnPos = new Vector3(transform.position.x, 0, transform.position.z);
+            Instantiate(Resources.Load("Prefabs/LevelPieces/ShinyRock"), spawnPos, Quaternion.identity);
+            shinyRocks--;
+        }
+    }
+
+    void ToggleFloodlight() {
+        if(hasFloodlight) {
+            if(_floodlight.activeSelf) {
+                _camera.backgroundColor = Color.black;
+                _floodlight.SetActive(false);
+            } else {
+                _camera.backgroundColor = Color.white;
+                _floodlight.SetActive(true);
+            }
+        }
+    }
+
+    void FireSlingshot() {
+        if (_slingCooldownTimer > _slingCooldown) {
+            GameObject _shotObject = Instantiate(_slingObject, transform.position, Quaternion.identity);
+            _shotObject.GetComponent<Projectile>().moveSpeed = 10;
+
+            // Shoot towards the target reticle (mouse pos)
+            Vector3 targetPos = _camera.ScreenToWorldPoint(Input.mousePosition);
+            targetPos.y = 0;
+            _shotObject.transform.LookAt(targetPos);
+
+            Physics.IgnoreCollision(_shotObject.GetComponent<Collider>(), _myCollider);
+
+            // Play sound
+            _audio.PlaySlingshotClip();
+
+            _slingCooldownTimer = 0;
+        }
     }
 }

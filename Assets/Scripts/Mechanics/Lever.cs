@@ -23,8 +23,16 @@ public class Lever : InteractableObject {
     }
 
     protected override void OnInteract() {
-        base.OnInteract();
+        // Gonna try not letting the lever flip back
+        if (isOn) {
+            base.OnInteract();
+            Flip();
+            // Play a sound
+            audioSource.Play();
+        }
+    }
 
+    void Flip() {
         // Flip
         isOn = !isOn;
 
@@ -37,9 +45,6 @@ public class Lever : InteractableObject {
 
         // Move lever to correct position
         UpdateLeverPosition();
-
-        // Play a sound
-        audioSource.Play();
     }
 
     void UpdateLeverPosition() {
@@ -51,10 +56,13 @@ public class Lever : InteractableObject {
     }
 
     protected override void TriggerEnterChecks(Collider other) {
-        base.TriggerEnterChecks(other);
+        // Gonna try not letting the lever flip back
+        if (isOn) {
+            base.TriggerEnterChecks(other);
 
-        if(other.tag == "Damage") {
-            OnInteract();
+            if (other.tag == "Damage") {
+                OnInteract();
+            }
         }
     }
 }

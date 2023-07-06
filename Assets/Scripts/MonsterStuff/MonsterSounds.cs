@@ -8,6 +8,8 @@ public class MonsterSounds : MonoBehaviour {
     AudioSource _mainAudio;
     [SerializeField]
     AudioSource _extraAudio;
+    [SerializeField]
+    AudioSource _extraAudio2;
 
     [SerializeField]
     AudioClip[] _footstepClips;
@@ -20,12 +22,12 @@ public class MonsterSounds : MonoBehaviour {
     AudioClip _hurtClip;
 
     float _stepDist = 3f;
-    Vector3 _lastStepPos;
+    Vector3 _lastPos;
     float _distFromLastStep;
 
     // Start is called before the first frame update
     void Start() {
-        _lastStepPos = transform.position;
+        _lastPos = transform.position;
     }
 
     // Update is called once per frame
@@ -46,23 +48,34 @@ public class MonsterSounds : MonoBehaviour {
     }
 
     void Footsteps() {
-        _distFromLastStep = Vector3.Distance(_lastStepPos, transform.position);
+        _distFromLastStep += Vector3.Distance(_lastPos, transform.position);
+        // Save the step position
+        _lastPos = transform.position;
+
+        // Check if we've walked far enough for a step (and we're not in the middle of another step)
         if (_distFromLastStep > _stepDist) {
             // Play the next footstep sound
-            _extraAudio.clip = _footstepClips[_footstepIndex++];
-            _extraAudio.Play();
+            if(!_extraAudio.isPlaying) {
+                _extraAudio.clip = _footstepClips[_footstepIndex++];
+                _extraAudio.Play();
+            } else if (!_extraAudio2.isPlaying) {
+                _extraAudio2.clip = _footstepClips[_footstepIndex++];
+                _extraAudio2.Play();
+            } else {
+                _extraAudio.clip = _footstepClips[_footstepIndex++];
+                _extraAudio.Play();
+            }
+
             if (_footstepIndex >= _footstepClips.Length) {
                 _footstepIndex = 0;
             }
-
-            // Save the step position
-            _lastStepPos = transform.position;
+            _distFromLastStep = 0;
         }
     }
 
     public void ChargeSetup() {
         // Make footsteps play faster
-        _stepDist = 2f;
+        //_stepDist = 2f;
 
         // Play first charge clip
         _mainAudio.clip = _chargeClips[0];

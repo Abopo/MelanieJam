@@ -12,14 +12,17 @@ public class InteractableObject : MonoBehaviour {
 
     protected AudioSource audioSource;
 
+    protected PlayerController _playerController;
+
     // Start is called before the first frame update
     protected virtual void Start() {
         audioSource = GetComponent<AudioSource>();
+        _playerController = FindObjectOfType<PlayerController>();
     }
 
     // Update is called once per frame
     protected virtual void Update() {
-        if (_playerIsNear) {
+        if (_playerIsNear && _playerController.hasControl) {
             if (Input.GetKeyDown(KeyCode.E)) {
                 OnInteract();
             }
@@ -53,5 +56,9 @@ public class InteractableObject : MonoBehaviour {
     private void OnDestroy() {
         _interactPrompt.SetActive(false);
         Destroy(_interactPrompt.gameObject);
+    }
+
+    protected virtual void Reset() {
+
     }
 }

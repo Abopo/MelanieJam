@@ -7,14 +7,16 @@ public enum MONSTER_STATE { IDLE, WALKING, CHARGING, SEARCHING, NUM_STATES };
 
 public class TheMonster : CollisionObject {
 
-
     MONSTER_STATE _curState;
+    MONSTER_STATE _prevState;
 
     [SerializeField]
     int chargeThreshold;
     int _echoHits = 0;
+    float _echoForgetDelay = 2.0f;
+    float _echoForgetDelayTimer = 0f;
     float _echoForgetTime = 0.1f;
-    float _echoforgetTimer = 0f;
+    float _echoForgetTimer = 0f;
 
     public float chargeSpeed;
     Vector3 _lastPlayerPos;
@@ -34,6 +36,7 @@ public class TheMonster : CollisionObject {
     GameObject[] _pathNodes;
     int _nodeIndex;
     int _pathDir = 1;
+    bool _loopPath;
 
     float _baseAccel;
     float _runAccel;
@@ -75,43 +78,11 @@ public class TheMonster : CollisionObject {
                 ChargingUpdate();
                 break;
             case MONSTER_STATE.SEARCHING:
+                SearchingUpdate();
                 break;
         }
 
         ForgetEchoHits();
-    }
-
-    void ForgetEchoHits() {
-        if (_echoHits > 0) {
-            _echoforgetTimer += Time.deltaTime;
-            if (_echoforgetTimer > _echoForgetTime) {
-                _echoHits--;
-                _echoforgetTimer = 0f;
-            }
-        }
-    }
-
-    void WalkToNextNode() {
-        _curState = MONSTER_STATE.WALKING;
-
-        // Make sure we're not stopped
-        _agent.isStopped = false;
-
-        if (_agent.acceleration != _baseAccel) {
-            _agent.acceleration = _baseAccel;
-        }
-
-        // Progress down the path
-        _nodeIndex += _pathDir;
-        if (_nodeIndex >= _pathNodes.Length) {
-            _pathDir = -1;
-            _nodeIndex--;
-        } else if (_nodeIndex <= 0) {
-            _pathDir = 1;
-            _nodeIndex = 0;
-        }
-
-        _agent.SetDestination(_pathNodes[_nodeIndex].transform.position);
     }
 
     void IdleUpdate() {
@@ -120,7 +91,11 @@ public class TheMonster : CollisionObject {
             // wait a small delay before walking
             _delayTimer += Time.deltaTime;
             if (_delayTimer > _walkDelay) {
-                WalkToNextNode();
+                if (_prevState == MONSTER_STATE.WALKING) {
+                    WalkToNextNode();
+                } else if(_prevState == MONSTER_STATE.SEARCHING) {
+                    SearchForPlayer();
+                }
 
                 // Play a sound
                 _sounds.ReturnToPath();
@@ -157,8 +132,93 @@ public class TheMonster : CollisionObject {
     }
 
     void SearchingUpdate() {
+        if (!_agent.pathPending) {
+            if (_agent.remainingDistance <= _agent.stoppingDistance) {
+                if (!_agent.hasPath || _agent.velocity.sqrMagnitude == 0f) {
+                    // Done
+                    SearchForPlayer();
+                    _retracedPath = true;
+                }
+            }
+        }
 
+        _chargeTimer += Time.deltaTime;
     }
+
+    void ForgetEchoHits() {
+        if (_echoHits > 0) {
+            _echoForgetDelayTimer += Time.deltaTime;
+            if (_echoForgetDelayTimer >= _echoForgetDelay) {
+                _echoForgetTimer += Time.deltaTime;
+                if (_echoForgetTimer > _echoForgetTime) {
+                    _echoHits--;
+                    _echoForgetTimer = 0f;
+                }
+            }
+        }
+    }
+
+    void WalkToNextNode() {
+        _curState = MONSTER_STATE.WALKING;
+
+        // Make sure we're not stopped
+        _agent.isStopped = false;
+
+        if (_agent.acceleration != _baseAccel) {
+            _agent.acceleration = _baseAccel;
+        }
+
+        // Progress down the path
+        _nodeIndex += _pathDir;
+        if (_nodeIndex >= _pathNodes.Length) {
+            if (_loopPath) {
+                _nodeIndex = 0;
+            } else {
+                _pathDir = -1;
+                _nodeIndex--;
+            }
+        } else if (_nodeIndex <= 0) {
+            if (_loopPath) {
+                _nodeIndex = _pathNodes.Length - 1;
+            } else {
+                _pathDir = 1;
+                _nodeIndex = 0;
+            }
+        }
+
+        _agent.SetDestination(_pathNodes[_nodeIndex].transform.position);
+    }
+
+    void SearchForPlayer() {
+        _curState = MONSTER_STATE.SEARCHING;
+
+        // Make sure we're not stopped
+        _agent.isStopped = false;
+
+        if (_agent.acceleration != _baseAccel) {
+            _agent.acceleration = _baseAccel;
+        }
+
+        // Find the node closest to the player (other than the current)
+        float distToPlayer;
+        float closestDist = 1000;
+        int closestIndex = 0;
+
+        for (int i = 0; i < _pathNodes.Length; i++) {
+            if(i != _nodeIndex) {
+                distToPlayer = Vector3.Distance(_pathNodes[i].transform.position, _playerController.transform.position);
+                if (distToPlayer < closestDist) {
+                    closestDist = distToPlayer;
+                    closestIndex = i;
+                }
+            }
+        }
+
+        // Head towards the closest node
+        _nodeIndex = closestIndex;
+        _agent.SetDestination(_pathNodes[_nodeIndex].transform.position);
+    }
+
 
     protected override void OnParticleCollision(GameObject other) {
         base.OnParticleCollision(other);
@@ -166,10 +226,18 @@ public class TheMonster : CollisionObject {
         if (_curState != MONSTER_STATE.CHARGING && _chargeTimer > _chargeCooldown) {
             // Keep track of how many particles hit us
             _echoHits++;
+            _echoForgetDelayTimer = 0f;
 
             // Charge at player position if too many
-            if (_echoHits >= chargeThreshold) {
-                StartChargeSequence();
+            if (other.layer == LayerMask.NameToLayer("Slingshot")) {
+                // Slingshot particles cause charge easier
+                if(_echoHits >= chargeThreshold/2) {
+                    StartChargeSequence(other.transform.parent);
+                }
+            } else {
+                if (_echoHits >= chargeThreshold) {
+                    StartChargeSequence(_playerController.transform);
+                }
             }
         }
     }
@@ -196,16 +264,26 @@ public class TheMonster : CollisionObject {
         }
     }
     
-    void StartChargeSequence() {
+    void StartChargeSequence(Transform target) {
         _echoHits = 0;
 
+        // Save the prev state and return to it after
+        if (_curState != MONSTER_STATE.IDLE && _curState != MONSTER_STATE.CHARGING) {
+            _prevState = _curState;
+        }
         _curState = MONSTER_STATE.CHARGING;
+
+        // Increase the charge threshold
+        chargeThreshold += 10;
+        if(chargeThreshold > 30) {
+            chargeThreshold = 30;
+        }
 
         // Stop pathing agent
         _agent.isStopped = true;
 
         // Get player position
-        _lastPlayerPos = _playerController.transform.position;
+        _lastPlayerPos = target.position;
 
         // Start charging after a delay
         StartCoroutine(ChargeStartup());
@@ -250,6 +328,7 @@ public class TheMonster : CollisionObject {
 
     void EndCharge() {
         _isCharging = false;
+        _chargeTimer = 0f;
         _chargeCollider.enabled = false;
         _curState = MONSTER_STATE.IDLE;
     }
@@ -273,13 +352,20 @@ public class TheMonster : CollisionObject {
         _sounds.HurtClip();
     }
 
-    public void ChangePath(MonsterPath path) {
+    public void ChangePath(MonsterPath path, MONSTER_STATE state) {
         if (_pathNodes != path.pathNodes) {
+            _curState = state;
+
             // Get the path objects from the parent
             _pathNodes = path.pathNodes;
+            _loopPath = path.isLoop;
 
             _nodeIndex = 0;
-            WalkToNextNode();
+            if (state == MONSTER_STATE.SEARCHING) {
+                SearchForPlayer();
+            } else if (state == MONSTER_STATE.WALKING) {
+                WalkToNextNode();
+            }
         }
     }
 }

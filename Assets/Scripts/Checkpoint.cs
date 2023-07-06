@@ -5,6 +5,10 @@ using UnityEngine;
 public class Checkpoint : MonoBehaviour {
 
     public bool activated;
+    public int index;
+
+    [SerializeField]
+    Door _blockingDoor;
 
     AudioSource _audioSource;
 
@@ -26,6 +30,10 @@ public class Checkpoint : MonoBehaviour {
 
             GameManager.instance.PlayerTouchedCheckpoint(this);
             other.GetComponentInParent<PlayerController>().HealthMeter.ResetHealth();
+
+            if (_blockingDoor != null) {
+                _blockingDoor.TurnOn();
+            }
         }
     }
 }

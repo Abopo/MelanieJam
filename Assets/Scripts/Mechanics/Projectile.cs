@@ -7,11 +7,11 @@ public class Projectile : MonoBehaviour {
     public float moveSpeed;
     Rigidbody _rigidbody;
 
-    AudioSource _audioSource;
-    Collider _myCollider;
+    protected AudioSource _audioSource;
+    protected Collider _myCollider;
 
     // Start is called before the first frame update
-    void Start() {
+    protected virtual void Start() {
         _rigidbody = GetComponent<Rigidbody>();
         _rigidbody.velocity = moveSpeed * transform.forward;
 
@@ -23,13 +23,22 @@ public class Projectile : MonoBehaviour {
     void Update() {
     }
 
-    private void OnCollisionEnter(Collision collision) {
-        GetComponent<AudioSource>().Play();
+    protected virtual void OnCollisionEnter(Collision collision) {
+        // Cancel all momentum
+        _rigidbody.velocity = Vector3.zero;
+
         _myCollider.enabled = false;
+
+        // Set clip based on what was hit
+        if(collision.gameObject.layer == LayerMask.NameToLayer("Shield")) {
+            _audioSource.clip = GameManager.instance.gameResources._arrowCollideShield;
+        }
+
+        _audioSource.Play();
         StartCoroutine(WaitForFinish());
     }
 
-    IEnumerator WaitForFinish() {
+    protected virtual IEnumerator WaitForFinish() {
         while(_audioSource.isPlaying) {
             yield return null;
         }

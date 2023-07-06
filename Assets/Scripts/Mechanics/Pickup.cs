@@ -44,7 +44,8 @@ public class Pickup : InteractableObject {
     }
 
     void GetMoney() {
+        _playerController.GetCash();
 
+        Destroy(gameObject);
     }
-
 }

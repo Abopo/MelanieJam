@@ -874,7 +874,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 38742326113158517}
   m_LocalRotation: {x: -0.0019233905, y: 0.9670853, z: 0.00029429296, w: -0.25444523}
-  m_LocalPosition: {x: 8.528, y: 0.001, z: -5.292}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -36400,7 +36400,7 @@ PrefabInstance:
       objectReference: {fileID: -5894335953922684300, guid: 9414eb173b4396d42a8c5da83755e145, type: 2}
     - target: {fileID: 7653237775808709793, guid: b9a7b06390472184e9c0c4bed4119d4d, type: 3}
       propertyPath: m_hasFontAssetChanged
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7653237775808709794, guid: b9a7b06390472184e9c0c4bed4119d4d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -36468,11 +36468,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7653237776193179302, guid: b9a7b06390472184e9c0c4bed4119d4d, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 2560
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 7653237776193179302, guid: b9a7b06390472184e9c0c4bed4119d4d, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 1440
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 7653237776193179302, guid: b9a7b06390472184e9c0c4bed4119d4d, type: 3}
       propertyPath: m_LocalPosition.x

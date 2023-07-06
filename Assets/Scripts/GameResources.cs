@@ -6,6 +6,9 @@ public class GameResources : MonoBehaviour {
 
     public Object ecolocationHit;
 
+    public AudioClip _arrowCollideDefault;
+    public AudioClip _arrowCollideShield;
+
     // Start is called before the first frame update
     void Start() {
         

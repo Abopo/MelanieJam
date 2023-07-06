@@ -1,6 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class GameManager : MonoBehaviour {
@@ -16,6 +19,15 @@ public class GameManager : MonoBehaviour {
 
     [SerializeField]
     TextMeshProUGUI _popupText;
+
+    [SerializeField]
+    GameObject _deathPopup;
+
+    [SerializeField]
+    GameObject _gameEndPopup;
+
+    public UnityEvent OnPlayerRespawn;
+    public UnityEvent OnGameEnd;
 
     private void Awake() {
         SingletonCheck();
@@ -33,14 +45,22 @@ public class GameManager : MonoBehaviour {
 
     // Start is called before the first frame update
     void Start() {
-        gameResources = gameObject.GetComponent<GameResources>();
-        _player = FindObjectOfType<PlayerController>();
-        _allCheckpoints = FindObjectsOfType<Checkpoint>();
+        if (_alive) {
+            gameResources = gameObject.GetComponent<GameResources>();
+            _player = FindObjectOfType<PlayerController>();
+            _allCheckpoints = FindObjectsOfType<Checkpoint>();
 
-        HealthMeter.onPlayerDeath.AddListener(OnPlayerDeath);
+            // Sort checkpoints
+            Array.Sort(_allCheckpoints,
+                delegate (Checkpoint x, Checkpoint y) { return x.index.CompareTo(y.index); });
 
-        // Spawn the player at the active checkpoint
-        SpawnPlayerAtCheckpoint();
+            HealthMeter.onPlayerDeath.AddListener(OnPlayerDeath);
+
+            OnGameEnd.AddListener(GameEndStuff);
+
+            // Spawn the player at the active checkpoint
+            SpawnPlayerAtCheckpoint();
+        }
     }
 
     void SpawnPlayerAtCheckpoint() {
@@ -57,6 +77,33 @@ public class GameManager : MonoBehaviour {
         if(_player == null) {
             _player = FindObjectOfType<PlayerController>();
         }
+
+        if (Input.GetKeyDown(KeyCode.Tab)) {
+            // Teleport player to the next checkpoint in the list
+            TeleportToNextCheckpoint();
+        }
+    }
+
+    void TeleportToNextCheckpoint() {
+        for (int i = 0; i < _allCheckpoints.Length; i++) {
+            // Find the currently active checkpoint
+            if (_allCheckpoints[i].activated == true) {
+                // Turn it off
+                _allCheckpoints[i].activated = false;
+
+                // Turn on the next one
+                if (i < _allCheckpoints.Length - 1) {
+                    _allCheckpoints[i + 1].activated = true;
+                } else {
+                    _allCheckpoints[0].activated = true;
+                }
+
+                break;
+            }
+        }
+
+        // spawn the player at the 'next' checkpoint
+        SpawnPlayerAtCheckpoint();
     }
 
     public void PlayerTouchedCheckpoint(Checkpoint checkpoint) {
@@ -70,11 +117,25 @@ public class GameManager : MonoBehaviour {
     }
 
     void OnPlayerDeath() {
+        // Remove player control
+        _player.hasControl = false;
+
+        // Show death popup
+        _deathPopup.SetActive(true);
+    }
+
+    public void RespawnPlayer() {
+        // Give player control
+        _player.hasControl = true;
+
+        // Close death popup
+        _deathPopup.SetActive(false);
+
         // Reset position to active checkpoint
         SpawnPlayerAtCheckpoint();
 
         // TODO: Reset states of interactable objects and stuff
-
+        OnPlayerRespawn.Invoke();
     }
 
     public void ShowTextPopup(string text) {
@@ -87,5 +148,17 @@ public class GameManager : MonoBehaviour {
         yield return new WaitForSeconds(5);
 
         _popupText.text = "";
+    }
+
+    void GameEndStuff() {
+        _player.hasControl = false;
+        _gameEndPopup.SetActive(true);
+    }
+
+    public void EndGame() {
+        // TODO: return to title if there is one
+
+        // For now, reload the scene?
+        SceneManager.LoadScene("MainCaveScene");
     }
 }

@@ -6,4 +6,5 @@ public class MonsterPath : MonoBehaviour {
 
     public GameObject[] pathNodes;
 
+    public bool isLoop;
 }

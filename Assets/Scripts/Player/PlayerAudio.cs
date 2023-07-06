@@ -31,7 +31,7 @@ public class PlayerAudio : MonoBehaviour {
         // Save the step position
         _lastStepPos = transform.position;
 
-        if (_distFromLastStep > _stepDist) {
+        if (_distFromLastStep > _stepDist && !_audioSource.isPlaying) {
             _distFromLastStep = 0;
 
             // Play the next footstep sound
@@ -40,7 +40,14 @@ public class PlayerAudio : MonoBehaviour {
             if (_footstepIndex >= _footstepClips.Length) {
                 _footstepIndex = 0;
             }
-
         }
+    }
+
+    public void PlayHurtClip() {
+
+    }
+
+    public void PlaySlingshotClip() {
+
     }
 }
