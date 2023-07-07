@@ -19,6 +19,9 @@ public class DizzyMeter : MonoBehaviour {
     [SerializeField]
     float _dizzyTimer;
 
+    [SerializeField]
+    GameObject _dizzyEffect;
+
     float _bufferTime = 1f;
     float _bufferTimer;
 
@@ -78,12 +81,19 @@ public class DizzyMeter : MonoBehaviour {
         if(_curMeterLength >= _baseMeterLength) {
             // Get dizzy
             isDizzy = true;
+            if (!_dizzyEffect.activeSelf) {
+                _dizzyEffect.SetActive(true);
+            }
         }
         if (_curMeterLength <= 0) {
             // Hide the meters
             meterObject.SetActive(false);
             // Undizzy
             isDizzy = false;
+
+            if (_dizzyEffect.activeSelf) {
+                _dizzyEffect.SetActive(false);
+            }
         }
     }
 

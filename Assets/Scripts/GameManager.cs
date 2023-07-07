@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour {
     [SerializeField]
     GameObject _gameEndPopup;
 
+    public bool gameEnd;
+
     public UnityEvent OnPlayerRespawn;
     public UnityEvent OnGameEnd;
 
@@ -152,13 +154,14 @@ public class GameManager : MonoBehaviour {
 
     void GameEndStuff() {
         _player.hasControl = false;
-        _gameEndPopup.SetActive(true);
+        gameEnd = true;
+        //_gameEndPopup.SetActive(true);
     }
 
     public void EndGame() {
         // TODO: return to title if there is one
 
         // For now, reload the scene?
-        SceneManager.LoadScene("MainCaveScene");
+        SceneManager.LoadScene("Credits");
     }
 }

@@ -62,6 +62,8 @@ public class TheMonster : CollisionObject {
         _sounds = GetComponent<MonsterSounds>();
         _playerController = FindObjectOfType<PlayerController>();
         _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
+
+        GameManager.instance.OnGameEnd.AddListener(OnGameEnd);
         //WalkToNextNode();
     }
 
@@ -128,6 +130,9 @@ public class TheMonster : CollisionObject {
 
             // Run forward until we hit something
             transform.Translate(Vector3.forward * chargeSpeed * Time.deltaTime);
+            // For some reason the above causes a slight downward movement, causing collision with the ground
+            // So just force a slightly above ground position
+            transform.position = new Vector3(transform.position.x, 0.16f, transform.position.z);
         }
     }
 
@@ -250,16 +255,18 @@ public class TheMonster : CollisionObject {
     }
 
     private void OnCollisionEnter(Collision collision) {
-        if(_curState == MONSTER_STATE.CHARGING && _isCharging) {
-            // If we're charging and hit a collision object
-            if(collision.gameObject.layer == LayerMask.NameToLayer("CollisionObject")) {
-                ChargeCollision(collision.gameObject);
+        if (!GameManager.instance.gameEnd) {
+            if (_curState == MONSTER_STATE.CHARGING && _isCharging) {
+                // If we're charging and hit a collision object
+                if (collision.gameObject.layer == LayerMask.NameToLayer("CollisionObject")) {
+                    ChargeCollision(collision.gameObject);
+                }
             }
-        }
-        if(collision.gameObject.tag == "Damage") {
-            if (_retracedPath) {
-                // Stop current pathing objective, and go back to previous one?
-                RunFromDamage();
+            if (collision.gameObject.tag == "Damage") {
+                if (_retracedPath) {
+                    // Stop current pathing objective, and go back to previous one?
+                    RunFromDamage();
+                }
             }
         }
     }
@@ -284,6 +291,9 @@ public class TheMonster : CollisionObject {
 
         // Get player position
         _lastPlayerPos = target.position;
+
+        // Turn off the agent so there's no chance of getting stuck in weird spots
+        _agent.enabled = false;
 
         // Start charging after a delay
         StartCoroutine(ChargeStartup());
@@ -331,6 +341,7 @@ public class TheMonster : CollisionObject {
         _chargeTimer = 0f;
         _chargeCollider.enabled = false;
         _curState = MONSTER_STATE.IDLE;
+        _agent.enabled = true;
     }
 
     void RunFromDamage() {
@@ -367,5 +378,10 @@ public class TheMonster : CollisionObject {
                 WalkToNextNode();
             }
         }
+    }
+
+    void OnGameEnd() {
+        // Play sound
+        _sounds.PlayFinalChargeHit();
     }
 }

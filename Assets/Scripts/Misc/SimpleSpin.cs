@@ -15,6 +15,6 @@ public class SimpleSpin : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        transform.Rotate(0f, spinSpeed * Time.deltaTime, 0f);
+        transform.Rotate(0f, spinSpeed * Time.deltaTime, 0f, Space.World);
     }
 }

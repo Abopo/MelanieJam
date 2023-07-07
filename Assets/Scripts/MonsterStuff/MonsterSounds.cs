@@ -105,6 +105,14 @@ public class MonsterSounds : MonoBehaviour {
         }
     }
 
+    public void PlayFinalChargeHit() {
+        // Play the main hit clip
+        _mainAudio.clip = _chargeClips[3];
+        _mainAudio.Play();
+
+        // also something else???
+    }
+
     public void ReturnToPath() {
         _mainAudio.clip = _chargeClips[2];
         _mainAudio.Play();
