@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour {
 
     [SerializeField]
     float _moveSpeed;
+    [SerializeField]
+    float _rotSpeed;
 
     [SerializeField]
     float mouseSensitivity;
@@ -44,6 +46,7 @@ public class PlayerController : MonoBehaviour {
     Vector3 _velocity;
     Rigidbody _rigidBody;
     Collider _myCollider;
+    Transform _model;
 
     PlayerAudio _audio;
     Camera _camera;
@@ -56,6 +59,7 @@ public class PlayerController : MonoBehaviour {
     public HealthMeter HealthMeter { get => _healthMeter; }
 
     private void Awake() {
+        //AudioListener.volume = PlayerPrefs.GetFloat("MasterVolume", 1);
     }
     // Start is called before the first frame update
     void Start() {
@@ -68,6 +72,7 @@ public class PlayerController : MonoBehaviour {
         _cashCounter = GetComponentInChildren<CashCounter>(true);
 
         _myCollider = GetComponentInChildren<Collider>();
+        _model = _myCollider.transform;
 
         _camera = GetComponentInChildren<Camera>();
         HealthMeter.onPlayerDeath.AddListener(OnPlayerDeath);
@@ -103,7 +108,6 @@ public class PlayerController : MonoBehaviour {
         }
 
         _velocity = Vector3.zero;
-
     }
 
     private void FixedUpdate() {
@@ -154,6 +158,12 @@ public class PlayerController : MonoBehaviour {
 
     void Movement() {
         _rigidBody.velocity = _velocity;
+
+        if (_rigidBody.velocity.magnitude > 0) {
+            // Rotate the model to follow our movement
+            Quaternion lookRotation = Quaternion.LookRotation(_rigidBody.velocity, transform.up);
+            _model.localRotation = Quaternion.RotateTowards(_model.localRotation, lookRotation, _rotSpeed * Time.deltaTime);
+        }
     }
 
     private void OnCollisionEnter(Collision collision) {

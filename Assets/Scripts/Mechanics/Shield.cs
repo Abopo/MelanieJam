@@ -8,6 +8,9 @@ public class Shield : MonoBehaviour {
 
     Vector3 _rotate = new Vector3(0f, 90f, 0f);
 
+    [SerializeField]
+    GameObject _objects;
+
     // Start is called before the first frame update
     void Start() {
         _player = FindObjectOfType<PlayerController>();
@@ -22,6 +25,14 @@ public class Shield : MonoBehaviour {
             if (Input.GetMouseButtonDown(0)) {
                 // Change position by rotating 90 degrees
                 transform.Rotate(_rotate);
+            }
+            if (Input.GetKeyDown(KeyCode.Q)) {
+                // Toggle shield on/off
+                if(_objects.activeSelf) {
+                    _objects.SetActive(false);
+                } else {
+                    _objects.SetActive(true);
+                }
             }
         }
     }

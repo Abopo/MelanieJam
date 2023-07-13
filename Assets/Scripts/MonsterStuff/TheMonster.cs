@@ -7,8 +7,9 @@ public enum MONSTER_STATE { IDLE, WALKING, CHARGING, SEARCHING, NUM_STATES };
 
 public class TheMonster : CollisionObject {
 
+    [SerializeField]
     MONSTER_STATE _curState;
-    MONSTER_STATE _prevState;
+    MONSTER_STATE _prevState = MONSTER_STATE.WALKING;
 
     [SerializeField]
     int chargeThreshold;
@@ -97,6 +98,9 @@ public class TheMonster : CollisionObject {
                     WalkToNextNode();
                 } else if(_prevState == MONSTER_STATE.SEARCHING) {
                     SearchForPlayer();
+                } else {
+                    // Just in case so we don't get stuck
+                    WalkToNextNode();
                 }
 
                 // Play a sound

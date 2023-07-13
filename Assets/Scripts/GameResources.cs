@@ -9,6 +9,9 @@ public class GameResources : MonoBehaviour {
     public AudioClip _arrowCollideDefault;
     public AudioClip _arrowCollideShield;
 
+    public Material _echoHitSquare;
+    public Material _echoHitX;
+
     // Start is called before the first frame update
     void Start() {
         

@@ -10,13 +10,13 @@ public class InteractableObject : MonoBehaviour {
 
     bool _playerIsNear;
 
-    protected AudioSource audioSource;
+    protected AudioSource _audioSource;
 
     protected PlayerController _playerController;
 
     // Start is called before the first frame update
     protected virtual void Start() {
-        audioSource = GetComponent<AudioSource>();
+        _audioSource = GetComponent<AudioSource>();
         _playerController = FindObjectOfType<PlayerController>();
     }
 

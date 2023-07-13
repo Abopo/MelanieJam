@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PICKUPS { SHIELD, MONEY, NUM_PICKUPS };
+public enum PICKUPS { SHIELD, MONEY, SHINY_ROCK, NUM_PICKUPS };
 
 public class Pickup : InteractableObject {
 
@@ -29,6 +29,9 @@ public class Pickup : InteractableObject {
             case PICKUPS.MONEY:
                 GetMoney();
                 break;
+            case PICKUPS.SHINY_ROCK:
+                PickupRock();
+                break;
         }
     }
 
@@ -45,6 +48,21 @@ public class Pickup : InteractableObject {
 
     void GetMoney() {
         _playerController.GetCash();
+        _audioSource.Play();
+
+        StartCoroutine(DestroyAfter());
+    }
+
+    void PickupRock() {
+        _playerController.shinyRocks += 1;
+     
+        Destroy(gameObject);
+    }
+
+    IEnumerator DestroyAfter() {
+        while(_audioSource.isPlaying) {
+            yield return null;
+        }
 
         Destroy(gameObject);
     }

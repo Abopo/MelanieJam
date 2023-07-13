@@ -185,7 +185,7 @@ GameObject:
   - component: {fileID: 4051076472925359360}
   - component: {fileID: 7716979515837499271}
   - component: {fileID: 6090149863488858667}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -269,7 +269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 457cbfaaea74e2c499fdc3e44c8018bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectType: 1
+  objectType: 0
   keepMesh: 0
 --- !u!64 &6090149863488858667
 MeshCollider:

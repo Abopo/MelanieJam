@@ -53,7 +53,7 @@ public class Shop : MonoBehaviour {
             if (_playerController.cash >= _shinyRockPrice) {
                 // Give the player a shiny rock
                 _playerController.shinyRocks += 1;
-                _playerController.cash -= 1;
+                _playerController.cash -= _shinyRockPrice;
 
                 _shinyRockStock -= 1;
                 _shinyRockStockText.text = _shinyRockStock.ToString();
@@ -73,7 +73,7 @@ public class Shop : MonoBehaviour {
             if (_playerController.cash >= _floodlightPrice) {
                 // Give the player a floodlight
                 _playerController.hasFloodlight = true;
-                _playerController.cash -= 1;
+                _playerController.cash -= _floodlightPrice;
 
                 _floodlightStock -= 1;
                 _floodlightStockText.text = _floodlightStock.ToString();
@@ -93,7 +93,7 @@ public class Shop : MonoBehaviour {
             if (_playerController.cash >= _slingshotPrice) {
                 // Give the player a slingshot
                 _playerController.hasSlingshot = true;
-                _playerController.cash -= 1;
+                _playerController.cash -= _slingshotPrice;
 
                 _slingshotStock -= 1;
                 _slingshotStockText.text = _slingshotStock.ToString();

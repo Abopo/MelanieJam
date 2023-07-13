@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class NPC : InteractableObject {
 
     [SerializeField]
     SuperTextMesh _dialogueText;
+
+    [SerializeField]
+    Image _continueArrow;
 
     [SerializeField]
     string[] _dialogues;
@@ -29,8 +33,8 @@ public class NPC : InteractableObject {
         if (_isSpeaking) {
             if (!_dialogueText.reading) {
                 // Wait for input from player
-                if (Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0)) {
-                    //NextLine();
+                if (Input.GetKeyDown(KeyCode.E)) {
+                    NextLine();
                 }
             }
         }
@@ -45,6 +49,9 @@ public class NPC : InteractableObject {
         _dialogueText.text = _dialogues[_curIndex++];
 
         _interactPrompt.SetActive(false);
+        if (_continueArrow != null) {
+            _continueArrow.enabled = false;
+        }
 
         // Take control away from player
         _playerController.hasControl = false;
@@ -57,7 +64,12 @@ public class NPC : InteractableObject {
 
     protected virtual void OnFinishedReading() {
         // Just automatically go to the next line after a small delay.
-        _nextLineCoroutine = StartCoroutine(NextLineLater());
+        //_nextLineCoroutine = StartCoroutine(NextLineLater());
+
+        // Show little continue arrow
+        if(_continueArrow != null) {
+            _continueArrow.enabled = true;
+        }
     }
     IEnumerator NextLineLater() {
         yield return new WaitForSeconds(1.2f);
@@ -70,6 +82,10 @@ public class NPC : InteractableObject {
             _dialogueText.text = _dialogues[_curIndex++];
         } else {
             EndDialogue();
+        }
+
+        if (_continueArrow != null) {
+            _continueArrow.enabled = false;
         }
     }
 

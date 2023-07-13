@@ -19,9 +19,13 @@ public class GameManager : MonoBehaviour {
 
     [SerializeField]
     TextMeshProUGUI _popupText;
+    float _popupTime = 5f;
 
     [SerializeField]
-    GameObject _deathPopup;
+    PauseMenu _pauseMenu;
+
+    [SerializeField]
+    DeathMenu _deathPopup;
 
     [SerializeField]
     GameObject _gameEndPopup;
@@ -80,6 +84,10 @@ public class GameManager : MonoBehaviour {
             _player = FindObjectOfType<PlayerController>();
         }
 
+        if(Input.GetKeyDown(KeyCode.Escape)) {
+            _pauseMenu.ActivateMenu();
+        }
+
         if (Input.GetKeyDown(KeyCode.Tab)) {
             // Teleport player to the next checkpoint in the list
             TeleportToNextCheckpoint();
@@ -123,7 +131,7 @@ public class GameManager : MonoBehaviour {
         _player.hasControl = false;
 
         // Show death popup
-        _deathPopup.SetActive(true);
+        _deathPopup.OpenMenu();
     }
 
     public void RespawnPlayer() {
@@ -131,7 +139,7 @@ public class GameManager : MonoBehaviour {
         _player.hasControl = true;
 
         // Close death popup
-        _deathPopup.SetActive(false);
+        _deathPopup.CloseMenu();
 
         // Reset position to active checkpoint
         SpawnPlayerAtCheckpoint();
@@ -142,12 +150,19 @@ public class GameManager : MonoBehaviour {
 
     public void ShowTextPopup(string text) {
         _popupText.text = text;
+        _popupTime = 5f;
+
+        StartCoroutine(HideTextLater());
+    }
+    public void ShowTextPopup(string text, float time) {
+        _popupText.text = text;
+        _popupTime = time;
 
         StartCoroutine(HideTextLater());
     }
 
     IEnumerator HideTextLater() {
-        yield return new WaitForSeconds(5);
+        yield return new WaitForSeconds(_popupTime);
 
         _popupText.text = "";
     }

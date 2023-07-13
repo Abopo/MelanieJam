@@ -17,12 +17,18 @@ public class CollisionObject : MonoBehaviour {
     [SerializeField]
     bool keepMesh;
 
+    bool _colorblindMode;
+
     // Start is called before the first frame update
     protected virtual void Start() {
         _myRenderer = GetComponentInChildren<MeshRenderer>();
 
         if(_myRenderer != null && !keepMesh) {
             _myRenderer.enabled = false;
+        }
+
+        if (PlayerPrefs.GetInt("Colorblind") == 1) {
+            _colorblindMode = true;
         }
     }
 
@@ -52,10 +58,16 @@ public class CollisionObject : MonoBehaviour {
                         // Leave it white?
                         break;
                     case OBJECT_TYPE.DANGER:
+                        if(_colorblindMode) {
+                            _tempEcolocationHit.GetComponentInChildren<MeshRenderer>().material = GameManager.instance.gameResources._echoHitX;
+                        }
                         // Change to red
                         _tempEcolocationHit.GetComponentInChildren<MeshRenderer>().material.color = new Color(0.88f, 0.08f, 0.08f);
                         break;
                     case OBJECT_TYPE.INTERACTABLE:
+                        if (_colorblindMode) {
+                            _tempEcolocationHit.GetComponentInChildren<MeshRenderer>().material = GameManager.instance.gameResources._echoHitSquare;
+                        }
                         // Change to green
                         _tempEcolocationHit.GetComponentInChildren<MeshRenderer>().material.color = new Color(0.05f, 0.88f, 0.05f);
                         break;

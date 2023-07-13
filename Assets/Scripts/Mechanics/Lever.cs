@@ -28,7 +28,7 @@ public class Lever : InteractableObject {
             base.OnInteract();
             Flip();
             // Play a sound
-            audioSource.Play();
+            _audioSource.Play();
         }
     }
 
